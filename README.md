@@ -1,6 +1,6 @@
 # Redash Helm Chart
 
-This Helm chart deploys Redash 25.1.0 on a Kubernetes cluster with security, scalability, and operational best practices.
+This chart makes it easy to deploy Redash 25.1.0 on Kubernetes. It's tailored for security, scalability, and compatibility — with sensible defaults that work in most real-world scenarios.
 
 ## Prerequisites
 
@@ -143,6 +143,8 @@ The following table lists the configurable parameters of the Redash chart and th
 | `postgresql.auth.database` | PostgreSQL database | `redash` |
 | `postgresql.primary.persistence.size` | PostgreSQL persistence size | `8Gi` |
 
+**Note:** This chart uses PostgreSQL `13.18.0-debian-12-r2` to ensure full compatibility with Redash 25.1.0.
+
 ### Redis Configuration
 
 | Parameter | Description | Default |
@@ -150,6 +152,8 @@ The following table lists the configurable parameters of the Redash chart and th
 | `redis.enabled` | Enable Redis dependency | `true` |
 | `redis.auth.password` | Redis password | `""` (auto-generated) |
 | `redis.master.persistence.size` | Redis persistence size | `8Gi` |
+
+**Note:** This chart uses Redis `6.2.16-debian-12-r3` to ensure compatibility and avoid authentication issues with Redash 25.1.0.
 
 ### Security Configuration
 
