@@ -1,0 +1,31 @@
+{{- if .Values.redash.web.podDisruptionBudget.minAvailable }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "redash.fullname" . }}-web
+  labels:
+    {{- include "redash.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  minAvailable: {{ .Values.redash.web.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "redash.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: web
+{{- end }}
+---
+{{- if .Values.redash.worker.podDisruptionBudget.minAvailable }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "redash.fullname" . }}-worker
+  labels:
+    {{- include "redash.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  minAvailable: {{ .Values.redash.worker.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "redash.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+{{- end }}

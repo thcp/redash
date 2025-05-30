@@ -1,0 +1,26 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "redash.fullname" . }}
+  labels:
+    {{- include "redash.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "configmaps", "secrets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "redash.fullname" . }}
+  labels:
+    {{- include "redash.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "redash.serviceAccountName" . }}
+roleRef:
+  kind: Role
+  name: {{ include "redash.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
