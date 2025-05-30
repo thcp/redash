@@ -1,0 +1,21 @@
+apiVersion: v2
+name: redash
+description: A Helm chart for deploying Redash on Kubernetes
+type: application
+version: 0.1.0
+appVersion: "25.1.0"
+home: https://redash.io/
+sources:
+  - https://github.com/getredash/redash
+  - https://github.com/thcp/redash
+maintainers:
+  - name: Thales Pereira
+dependencies:
+  - name: postgresql
+    version: ~16.7.5
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: ~21.1.10
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled

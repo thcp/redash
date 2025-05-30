@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "redash.fullname" . }}-scheduler
+  labels:
+    {{- include "redash.labels" . | nindent 4 }}
+    app.kubernetes.io/component: scheduler
+spec:
+  replicas: {{ .Values.redash.scheduler.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "redash.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: scheduler
+  template:
+    metadata:
+      labels:
+        {{- include "redash.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: scheduler
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "redash.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.redash.scheduler.securityContext | nindent 8 }}
+      initContainers:
+        - name: wait-for-db
+          image: "{{ .Values.pgsqlImage }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              until PGPASSWORD=$POSTGRESQL_PASSWORD psql -h {{ include "redash.postgresql.host" . }} -U {{ include "redash.postgresql.user" . }} -d {{ include "redash.postgresql.database" . }} -c "select 1"; do
+                echo "Waiting for PostgreSQL to be ready..."
+                sleep 2
+              done
+          env:
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "redash.postgresql.secretName" . }}
+                  key: password
+      containers:
+        - name: {{ .Chart.Name }}-scheduler
+          securityContext:
+            {{- toYaml .Values.redash.scheduler.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              export REDASH_REDIS_URL="redis://:${REDIS_PASSWORD}@{{ include "redash.redis.host" . }}:{{ include "redash.redis.port" . }}/0"
+              export REDASH_DATABASE_URL="postgresql://{{ include "redash.postgresql.user" . }}:${POSTGRESQL_PASSWORD}@{{ include "redash.postgresql.host" . }}:{{ include "redash.postgresql.port" . }}/{{ include "redash.postgresql.database" . }}"
+              exec /app/bin/docker-entrypoint scheduler
+          resources:
+            {{- toYaml .Values.redash.scheduler.resources | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ include "redash.fullname" . }}-env
+          env:
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "redash.postgresql.secretName" . }}
+                  key: password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "redash.redis.secretName" . }}
+                  key: redis-password

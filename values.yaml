@@ -1,0 +1,189 @@
+# Default values for Redash Helm chart
+# This is a YAML-formatted file.
+
+# Redash image configuration
+image:
+  repository: redash/redash
+  tag: 25.1.0
+  pullPolicy: IfNotPresent
+pgsqlImage: postgres:15
+# Image pull secrets
+imagePullSecrets: []
+
+# Redash configuration
+redash:
+  # Common environment variables for all Redash components
+  env:
+    PYTHONUNBUFFERED: "0"
+    REDASH_LOG_LEVEL: "INFO"
+    # Required security keys - should be overridden with actual values
+    REDASH_SECRET_KEY: ""
+    REDASH_COOKIE_SECRET: ""
+    # Host configuration
+    REDASH_HOST: "http://localhost"
+    # Feature flags
+    REDASH_FEATURE_ALLOW_CUSTOM_JS_VISUALIZATIONS: "true"
+    REDASH_FEATURE_SHOW_QUERY_RESULTS_COUNT: "true"
+    # Security settings
+    REDASH_ENFORCE_CSRF: "false"
+    REDASH_ENFORCE_HTTPS: "false"
+    # Database connection string will be constructed from postgresql values
+    # Redis connection string will be constructed from redis values
+  
+  # Web server configuration
+  web:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    podDisruptionBudget:
+      minAvailable: 1
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 5000
+    
+  # Worker configuration
+  worker:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      # allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+    podDisruptionBudget:
+      minAvailable: 1
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 80
+      targetMemoryUtilizationPercentage: 80
+    # Worker specific settings
+    env:
+      WORKERS_COUNT: "2"
+      QUEUES: "queries,scheduled_queries,celery"
+      REDASH_JOB_EXPIRY_TIME: "43200" # 12 hours in seconds
+  
+  # Scheduler configuration
+  scheduler:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    securityContext:
+      runAsUser: 1000
+      runAsGroup: 1000
+      runAsNonRoot: true
+      # allowPrivilegeEscalation: false
+      seccompProfile:
+        type: RuntimeDefault
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: redash.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  # - secretName: redash-tls
+  #   hosts:
+  #     - redash.example.com
+
+# Mail Configuration
+mail:
+  server: ""
+  port: 25
+  useTLS: false
+  useSSL: false
+  username: ""
+  password: ""
+  defaultSender: ""
+
+# SSO Configuration with Azure AD
+sso:
+  enabled: true
+  # These values should be provided through Kubernetes secrets
+  # and referenced in the deployment
+  saml:
+    metadataUrl: ""
+    entityId: ""
+    callbackUrl: ""
+    loginEnabled: true
+
+# Query Runners Configuration
+queryRunners:
+  enabled: []
+  disabled: []
+  additional: []
+
+# Alert Destinations Configuration
+alertDestinations:
+  enabled: []
+  additional: []
+
+# PostgreSQL dependency configuration
+postgresql:
+  enabled: true
+  image:
+    tag: 13.18.0-debian-12-r2
+  auth:
+    username: redash
+    password: ""  # Will be auto-generated if not provided
+    database: redash
+  primary:
+    persistence:
+      size: 8Gi
+
+# Redis dependency configuration
+redis:
+  enabled: true
+  image:
+    tag: 6.2.16-debian-12-r3
+  auth:
+    password: ""  # Will be auto-generated if not provided
+  master:
+    persistence:
+      size: 8Gi
+
+# Service account configuration
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod security policy - deprecated in Kubernetes v1.21+
+# For backward compatibility with older clusters
+podSecurityPolicy:
+  enabled: false
+
+# RBAC configuration
+rbac:
+  create: true

@@ -1,0 +1,45 @@
+{{- if .Values.podSecurityPolicy.enabled }}
+# Note: PodSecurityPolicy API is deprecated in Kubernetes v1.21 and removed in v1.25
+# This is kept for backward compatibility with older clusters
+# For newer clusters, use the PodSecurityContext approach instead
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: {{ include "redash.fullname" . }}
+  labels:
+    {{- include "redash.labels" . | nindent 4 }}
+  annotations:
+    deprecated: "true"
+    "helm.sh/hook": "pre-install,pre-upgrade"
+    "helm.sh/hook-delete-policy": "before-hook-creation"
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  fsGroup:
+    rule: 'MustRunAs'
+    ranges:
+      - min: 1
+        max: 65535
+  readOnlyRootFilesystem: false
+{{- end }}
