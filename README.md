@@ -16,8 +16,12 @@ helm install redash \
   --namespace redash \
   --create-namespace \
   --values values.yaml \
+  --set redash.env.REDASH_SECRET_KEY="your-static-secret-key" \
+  --set redash.env.REDASH_COOKIE_SECRET="your-static-cookie-secret" \
   .
 ```
+
+It's important to define `REDASH_SECRET_KEY` and `REDASH_COOKIE_SECRET` as static values to ensure consistent cryptographic behavior across deployments.
 
 ## Configuration
 
