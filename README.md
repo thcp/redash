@@ -12,7 +12,11 @@ This chart makes it easy to deploy Redash 25.1.0 on Kubernetes. It's tailored fo
 To install the chart with the release name `my-redash`:
 
 ```bash
-helm install my-redash .
+helm install redash \
+  --namespace redash \
+  --create-namespace \
+  --values values.yaml \
+  .
 ```
 
 ## Configuration
